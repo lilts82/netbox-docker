@@ -54,3 +54,8 @@
 # from datetime import datetime
 # now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 # BANNER_TOP = f'<marquee width="200px">This instance started on {now}.</marquee>'
+
+# Use NetBox's supported Chinese locale code (zh). Our mounted zh translation file has been converted to Traditional Chinese.
+DEFAULT_LANGUAGE = "zh"
+TRANSLATION_ENABLED = True
+TIME_ZONE = 'Asia/Taipei'

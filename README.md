@@ -61,6 +61,52 @@ you can also set the `SUPERUSER_*` variables in your `docker-compose.override.ym
 
 [wiki-getting-started]: https://github.com/netbox-community/netbox-docker/wiki/Getting-Started
 
+## Traditional Chinese UI Override
+
+NetBox currently exposes Chinese as locale `zh` (there is no separate `zh-tw`/`zh-hant` locale in the image).
+If you need Traditional Chinese wording, you can override the `zh` translation files.
+
+### What Was Added
+
+1. Keep NetBox language set to `zh` in `configuration/extra.py`:
+
+```python
+DEFAULT_LANGUAGE = "zh"
+TRANSLATION_ENABLED = True
+```
+
+2. Mount local translation files into the NetBox container via `docker-compose.override.yml`:
+
+```yaml
+services:
+  netbox:
+    volumes:
+      - ./translations/zh/LC_MESSAGES:/opt/netbox/netbox/translations/zh/LC_MESSAGES:ro
+```
+
+3. Place your custom translation files here:
+
+- `translations/zh/LC_MESSAGES/django.po`
+- `translations/zh/LC_MESSAGES/django.mo`
+
+4. Recreate NetBox services:
+
+```bash
+docker compose up -d --force-recreate netbox netbox-worker
+```
+
+### Future Fine-Tuning Options
+
+After this baseline override, you can further tune language style:
+
+- Replace Mainland wording with Taiwan/Hong Kong terms (for example `运营商` -> `營運商`).
+- Normalize IT vocabulary to your team standard glossary.
+- Keep selected terms in English where preferred (for example model or protocol names).
+- Version-control `.po` updates and regenerate `.mo` after each change.
+- Split translation policy by environment (for example production vs. lab) using different override files.
+
+Tip: After updating translation files, run a hard refresh in your browser (Ctrl+F5) if old wording is still cached.
+
 ## Container Image Tags
 
 New container images are built and published automatically every ~24h.
