@@ -1,0 +1,16 @@
+FROM netboxcommunity/netbox:latest
+
+COPY ./plugin_requirements.txt /opt/netbox/
+RUN /usr/local/bin/uv pip install -r /opt/netbox/plugin_requirements.txt
+
+# nextbox-ui-plugin bug workaround: VERSION string in Docker image contains
+# "-Docker-x.x.x" suffix which is not PEP 440 compliant, causing InvalidVersion.(移除docker版本號後綴以支持插件啟動)
+# Strip the suffix before parsing so version.parse() succeeds.
+RUN grep -rl 'version.parse(settings.VERSION)' /opt/netbox/venv/lib/python*/site-packages/nextbox_ui_plugin/ \
+    | xargs sed -i 's/version\.parse(settings\.VERSION)/version.parse(settings.VERSION.split("-")[0])/g'
+
+# These lines are only required if your plugin has its own static files.
+COPY configuration/configuration.py /etc/netbox/config/configuration.py
+COPY configuration/plugins.py /etc/netbox/config/plugins.py
+RUN DEBUG="true" SECRET_KEY="dummydummydummydummydummydummydummydummydummydummy" \
+    /opt/netbox/venv/bin/python /opt/netbox/netbox/manage.py collectstatic --no-input
