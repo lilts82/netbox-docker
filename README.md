@@ -190,6 +190,51 @@ See `./build.sh --help` for more information or `./build-latest.sh` for an examp
 
 For more details on custom builds [consult our wiki][netbox-docker-wiki-build].
 
+## Offline Image Packaging (Air-Gapped Deployments)
+
+If your deployment environment cannot build images or access registries,
+you can build and package images on a connected machine, then transfer them.
+
+### 1. Build images locally via docker compose
+
+```bash
+cd /path/to/netbox-docker
+docker compose up -d --build netbox netbox-worker
+```
+
+### 2. Package all required runtime images
+
+Package exactly the images referenced by your local merged compose config:
+
+```bash
+cd /path/to/netbox-docker
+mkdir -p /home/buu/offline-bundle
+ts=$(date +%Y%m%d_%H%M%S)
+docker compose config --images | sort -u | xargs docker save \
+  | gzip > /home/buu/offline-bundle/netbox-packed-images_${ts}.tar.gz
+
+sha256sum /home/buu/offline-bundle/netbox-packed-images_${ts}.tar.gz > /home/buu/offline-bundle/netbox-packed-images_${ts}.tar.gz.sha256
+```
+
+### 3. Load images on target host
+
+```bash
+sha256sum -c /home/buu/offline-bundle/netbox-packed-images_*.tar.gz.sha256
+gunzip -c /home/buu/offline-bundle/netbox-packed-images_*.tar.gz | docker load
+```
+
+If you want to skip checksum verification and load directly:
+
+```bash
+gunzip -c /home/buu/offline-bundle/netbox-packed-images_*.tar.gz | docker load
+```
+
+### 4. Start services using local images only
+
+```bash
+docker compose up -d --force-recreate netbox netbox-worker postgres redis redis-cache
+```
+
 [netbox-docker-wiki-build]: https://github.com/netbox-community/netbox-docker/wiki/Build
 
 ## Tests
